@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ This file contains different utility functions that are not connected
 in anyway to the networks presented in the tutorials, but rather help in
 processing the outputs into a more understandable way.
@@ -8,12 +9,14 @@ image from a set of samples or weights.
 """
 
 
-import numpy, os, cPickle
+import numpy, os
+import pickle as pk
 from PIL import Image
 
 def load_mnist():
     path = '.'
-    data = cPickle.load(open(os.path.join(path,'mnist.pkl'), 'r'))
+    with open(os.path.join(path,'mnist.pkl'), 'rb') as f:
+        data = pk.load(f, encoding='bytes')
     return data
 
 def scale_to_unit_interval(ndar, eps=1e-8):
@@ -89,7 +92,7 @@ def tile_raster_images(X, img_shape, tile_shape, tile_spacing=(0, 0),
         else:
             channel_defaults = [0., 0., 0., 1.]
 
-        for i in xrange(4):
+        for i in range(4):
             if X[i] is None:
                 # if channel is None, fill it with zeros of the correct
                 # dtype
@@ -117,8 +120,8 @@ def tile_raster_images(X, img_shape, tile_shape, tile_spacing=(0, 0),
             dt = 'uint8'
         out_array = numpy.zeros(out_shape, dtype=dt)
 
-        for tile_row in xrange(tile_shape[0]):
-            for tile_col in xrange(tile_shape[1]):
+        for tile_row in range(tile_shape[0]):
+            for tile_col in range(tile_shape[1]):
                 if tile_row * tile_shape[1] + tile_col < X.shape[0]:
                     this_x = X[tile_row * tile_shape[1] + tile_col]
                     if scale_rows_to_unit_interval:
@@ -157,6 +160,3 @@ def visualize_mnist():
     
 if __name__ == '__main__':
     visualize_mnist()
-    
-
-    
