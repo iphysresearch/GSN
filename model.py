@@ -1,4 +1,5 @@
-import numpy, os, sys, cPickle
+import numpy, os, sys
+import pickle as pk
 import theano
 import theano.tensor as T
 import theano.sandbox.rng_mrg as RNG_MRG
@@ -39,11 +40,11 @@ def get_shared_bias(n, name, offset = 0):
     return val
 
 def load_mnist(path):
-    data = cPickle.load(open(os.path.join(path,'mnist.pkl'), 'rb'))
+    data = pk.load(open(os.path.join(path,'mnist.pkl'), 'rb'))
     return data
 
 def load_mnist_binary(path):
-    data = cPickle.load(open(os.path.join(path,'mnist.pkl'), 'rb'))
+    data = pk.load(open(os.path.join(path,'mnist.pkl'), 'rb'))
     data = [list(d) for d in data] 
     data[0][0] = (data[0][0] > 0.5).astype('float32')
     data[1][0] = (data[1][0] > 0.5).astype('float32')
@@ -143,7 +144,7 @@ def experiment(state, channel):
         param_files     =   filter(lambda x:'params' in x, os.listdir('.'))
         max_epoch_idx   =   numpy.argmax([int(x.split('_')[-1].split('.')[0]) for x in param_files])
         params_to_load  =   param_files[max_epoch_idx]
-        PARAMS = cPickle.load(open(params_to_load,'r'))
+        PARAMS = pk.load(open(params_to_load,'r'))
         [p.set_value(lp.get_value(borrow=False)) for lp, p in zip(PARAMS[:len(weights_list)], weights_list)]
         [p.set_value(lp.get_value(borrow=False)) for lp, p in zip(PARAMS[len(weights_list):], bias_list)]
 
@@ -502,7 +503,7 @@ def experiment(state, channel):
         save_path = 'params_epoch_'+str(n)+'.pkl'
         f = open(save_path, 'wb')
         try:
-            cPickle.dump(params, f, protocol=cPickle.HIGHEST_PROTOCOL)
+            pk.dump(params, f, protocol=pk.HIGHEST_PROTOCOL)
         finally:
             f.close() 
 

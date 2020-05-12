@@ -34,7 +34,7 @@ def main():
     
     args = parser.parse_args()
    
-    print args.test_model 
+    print(args.test_model)
     
     model.experiment(args, None)
     
