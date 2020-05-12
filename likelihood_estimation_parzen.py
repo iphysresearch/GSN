@@ -4,7 +4,8 @@
 import sys
 import os
 import numpy
-import cPickle, gzip
+import gzip
+import pickle as pk
 import time
 
 import theano
@@ -68,7 +69,7 @@ def get_ll(x, parzen, batch_size=10):
         lls.extend(ll)
         
         if i % 10 == 0:
-            print i, numpy.mean(times), numpy.mean(lls)
+            print(i, numpy.mean(times), numpy.mean(lls))
     
     return lls
 
@@ -78,7 +79,7 @@ def main(sigma, dataset, sample_path='samples.npy'):
     # provide a .npy file where 10k generated samples are saved. 
     filename = sample_path
     
-    print 'loading samples from %s'%filename
+    print('loading samples from %s'%filename)
   
     (train_X, train_Y), (valid_X, valid_Y), (test_X, test_Y) = load_mnist('.')
     
@@ -88,8 +89,8 @@ def main(sigma, dataset, sample_path='samples.npy'):
             
     test_ll = get_ll(test_X, parzen)
     
-    print "Mean Log-Likelihood of test set = %.5f" % numpy.mean(test_ll)
-    print "Std of Mean Log-Likelihood of test set = %.5f" % (numpy.std(test_ll) / 100)
+    print("Mean Log-Likelihood of test set = %.5f" % numpy.mean(test_ll))
+    print("Std of Mean Log-Likelihood of test set = %.5f" % (numpy.std(test_ll) / 100))
 
 
 if __name__ == "__main__":

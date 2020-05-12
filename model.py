@@ -114,7 +114,7 @@ def experiment(state, channel):
         (train_X, train_Y), (valid_X, valid_Y), (test_X, test_Y) = load_tfd(state.data_path)
     
     N_input =   train_X.shape[1]
-    root_N_input = numpy.sqrt(N_input)
+    root_N_input = int(numpy.sqrt(N_input))  # 
     numpy.random.seed(1)
     numpy.random.shuffle(train_X)
     train_X = theano.shared(train_X)
@@ -143,10 +143,11 @@ def experiment(state, channel):
     if state.test_model:
         # Load the parameters of the last epoch
         # maybe if the path is given, load these specific attributes 
-        param_files     =   filter(lambda x:'params' in x, os.listdir('.'))
+        param_files     =   list(filter(lambda x:'params' in x, os.listdir('.')))  # https://stackoverflow.com/questions/15876259/typeerror-filter-object-is-not-subscriptable
         max_epoch_idx   =   numpy.argmax([int(x.split('_')[-1].split('.')[0]) for x in param_files])
         params_to_load  =   param_files[max_epoch_idx]
-        PARAMS = pk.load(open(params_to_load,'r'))
+        with open(params_to_load,'rb') as f:
+            PARAMS = pk.load(f, encoding='bytes')
         [p.set_value(lp.get_value(borrow=False)) for lp, p in zip(PARAMS[:len(weights_list)], weights_list)]
         [p.set_value(lp.get_value(borrow=False)) for lp, p in zip(PARAMS[len(weights_list):], bias_list)]
 
@@ -319,7 +320,7 @@ def experiment(state, channel):
     g_updates       =   [(p, p - learning_rate * mg) for (p, mg) in zip(params, m_gradient)]
     b_updates       =   zip(gradient_buffer, m_gradient)
         
-    updates         =   OrderedDict(g_updates + b_updates)
+    updates         =   OrderedDict(g_updates + list(b_updates))
     
     f_cost      =   theano.function(inputs = [X], outputs = show_COST)
     
@@ -536,7 +537,7 @@ def experiment(state, channel):
 
         #train
         train_cost  =   []
-        for i in range(len(train_X.get_value(borrow=True)) / batch_size):
+        for i in range(len(train_X.get_value(borrow=True)) // batch_size):
             #train_cost.append(f_learn(train_X[i * batch_size : (i+1) * batch_size]))
             #training_idx = numpy.array(range(i*batch_size, (i+1)*batch_size), dtype='int32')
             train_cost.append(f_learn(i))
@@ -547,7 +548,7 @@ def experiment(state, channel):
 
         #valid
         valid_cost  =   []
-        for i in range(len(valid_X.get_value(borrow=True)) / 100):
+        for i in range(len(valid_X.get_value(borrow=True)) // 100):
             valid_cost.append(f_cost(valid_X.get_value()[i * 100 : (i+1) * batch_size]))
         valid_cost = numpy.mean(valid_cost)
         #valid_cost  =   123
@@ -556,7 +557,7 @@ def experiment(state, channel):
 
         #test
         test_cost  =   []
-        for i in range(len(test_X.get_value(borrow=True)) / 100):
+        for i in range(len(test_X.get_value(borrow=True)) // 100):
             test_cost.append(f_cost(test_X.get_value()[i * 100 : (i+1) * batch_size]))
         test_cost = numpy.mean(test_cost)
         test_costs.append(test_cost)
@@ -576,7 +577,7 @@ def experiment(state, channel):
             reconstructed   =   f_recon(noisy_numbers) 
             # Concatenate stuff
             stacked         =   numpy.vstack([numpy.vstack([numbers[i*10 : (i+1)*10], noisy_numbers[i*10 : (i+1)*10], reconstructed[i*10 : (i+1)*10]]) for i in range(10)])
-        
+
             number_reconstruction   =   PIL.Image.fromarray(tile_raster_images(stacked, (root_N_input,root_N_input), (10,30)))
             #epoch_number    =   reduce(lambda x,y : x + y, ['_'] * (4-len(str(counter)))) + str(counter)
             number_reconstruction.save('number_reconstruction'+str(counter)+'.png')
