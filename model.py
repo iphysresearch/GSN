@@ -70,7 +70,7 @@ def load_tfd(path):
 
 def experiment(state, channel):
     if state.test_model and 'config' in os.listdir('.'):
-        print 'Loading local config file'
+        print('Loading local config file')
         config_file =   open('config', 'r')
         config      =   config_file.readlines()
         try:
@@ -80,9 +80,9 @@ def experiment(state, channel):
             config_vals =   filter(lambda x:not 'jobman' in x and not '/' in x and not ':' in x and not 'experiment' in x, config_vals)
         
         for CV in config_vals:
-            print CV
+            print(CV)
             if CV.startswith('test'):
-                print 'Do not override testing switch'
+                print('Do not override testing switch')
                 continue        
             try:
                 exec('state.'+CV) in globals(), locals()
@@ -92,12 +92,12 @@ def experiment(state, channel):
     else:
         # Save the current configuration
         # Useful for logs/experiments
-        print 'Saving config'
+        print('Saving config')
         f = open('config', 'w')
         f.write(str(state))
         f.close()
 
-    print state
+    print(state)
     # Load the data, train = train+valid, and shuffle train
     # Targets are not used (will be misaligned after shuffling train
     if state.dataset == 'MNIST':
@@ -155,7 +155,7 @@ def experiment(state, channel):
         return OUT
 
     def add_gaussian_noise(IN, std = 1):
-        print 'GAUSSIAN NOISE : ', std
+        print('GAUSSIAN NOISE : ', std)
         noise   =   MRG.normal(avg  = 0, std  = std, size = IN.shape, dtype='float32')
         OUT     =   IN + noise
         return OUT
@@ -168,7 +168,7 @@ def experiment(state, channel):
 
     def salt_and_pepper(IN, p = 0.2):
         # salt and pepper noise
-        print 'DAE uses salt and pepper noise'
+        print('DAE uses salt and pepper noise')
         a = MRG.binomial(size=IN.shape, n=1,
                               p = 1 - p,
                               dtype='float32')
@@ -182,7 +182,7 @@ def experiment(state, channel):
     # just a loop over the odd layers
     def update_odd_layers(hiddens, noisy):
         for i in range(1, K+1, 2):
-            print i
+            print(i)
             if noisy:
                 simple_update_layer(hiddens, None, i)
             else:
@@ -192,7 +192,7 @@ def experiment(state, channel):
     # p_X_chain is given to append the p(X|...) at each update (one update = odd update + even update)
     def update_even_layers(hiddens, p_X_chain, noisy):
         for i in range(0, K+1, 2):
-            print i
+            print(i)
             if noisy:
                 simple_update_layer(hiddens, p_X_chain, i)
             else:
@@ -222,25 +222,25 @@ def experiment(state, channel):
 
         # Add pre-activation noise if NOT input layer
         if i==1 and state.noiseless_h1:
-            print '>>NO noise in first layer'
+            print('>>NO noise in first layer')
             add_noise   =   False
 
         # pre activation noise            
         if i != 0 and add_noise:
-            print 'Adding pre-activation gaussian noise'
+            print('Adding pre-activation gaussian noise')
             hiddens[i]  =   add_gaussian_noise(hiddens[i], state.hidden_add_noise_sigma)
        
         # ACTIVATION!
         if i == 0:
-            print 'Sigmoid units'
+            print('Sigmoid units')
             hiddens[i]  =   T.nnet.sigmoid(hiddens[i])
         else:
-            print 'Hidden units'
+            print('Hidden units')
             hiddens[i]  =   hidden_activation(hiddens[i])
 
         # post activation noise            
         if i != 0 and add_noise:
-            print 'Adding post-activation gaussian noise'
+            print('Adding post-activation gaussian noise')
             hiddens[i]  =   add_gaussian_noise(hiddens[i], state.hidden_add_noise_sigma)
 
         # build the reconstruction chain
@@ -250,10 +250,10 @@ def experiment(state, channel):
             
             # sample from p(X|...)
             if state.input_sampling:
-                print 'Sampling from input'
+                print('Sampling from input')
                 sampled     =   MRG.binomial(p = hiddens[i], size=hiddens[i].shape, dtype='float32')
             else:
-                print '>>NO input sampling'
+                print('>>NO input sampling')
                 sampled     =   hiddens[i]
             # add noise
             sampled     =   salt_and_pepper(sampled, state.input_salt_and_pepper)
@@ -262,19 +262,19 @@ def experiment(state, channel):
             hiddens[i]  =   sampled
 
     def update_layers(hiddens, p_X_chain, noisy = True):
-        print 'odd layer update'
+        print('odd layer update')
         update_odd_layers(hiddens, noisy)
         print
-        print 'even layer update'
+        print('even layer update')
         update_even_layers(hiddens, p_X_chain, noisy)
 
  
     ''' F PROP '''
     if state.act == 'sigmoid':
-        print 'Using sigmoid activation'
+        print('Using sigmoid activation')
         hidden_activation = T.nnet.sigmoid
     elif state.act == 'rectifier':
-        print 'Using rectifier activation'
+        print('Using rectifier activation')
         hidden_activation = lambda x : T.maximum(cast32(0), x)
     elif state.act == 'tanh':
         hidden_activation = lambda x : T.tanh(x)    
@@ -286,19 +286,19 @@ def experiment(state, channel):
     ''' hidden layer init '''
     hiddens     = [X_corrupt]
     p_X_chain   = [] 
-    print "Hidden units initialization"
+    print("Hidden units initialization")
     for w,b in zip(weights_list, bias_list[1:]):
         # init with zeros
-        print "Init hidden units at zero before creating the graph"
+        print("Init hidden units at zero before creating the graph")
         hiddens.append(T.zeros_like(T.dot(hiddens[-1], w)))
 
     # The layer update scheme
-    print "Building the graph :", N,"updates"
+    print("Building the graph :", N,"updates")
     for i in range(N):
         update_layers(hiddens, p_X_chain)
     
     # COST AND GRADIENTS    
-    print 'Cost w.r.t p(X|...) at every step in the graph'
+    print('Cost w.r.t p(X|...) at every step in the graph')
     #COST        =   T.mean(T.nnet.binary_crossentropy(reconstruction, X))
     COST        =   [T.mean(T.nnet.binary_crossentropy(rX, X)) for rX in p_X_chain]
     #COST = [T.mean(T.sqr(rX-X)) for rX in p_X_chain]
@@ -441,7 +441,7 @@ def experiment(state, channel):
         
         fname       =   'samples_epoch_'+str(epoch_number)+'.png'
         img_samples.save(fname) 
-        print 'Took ' + str(time.time() - to_sample) + ' to sample 400 numbers'
+        print('Took ' + str(time.time() - to_sample) + ' to sample 400 numbers')
    
     ##############
     # Inpainting #
@@ -499,7 +499,7 @@ def experiment(state, channel):
    
     
     def save_params(n, params):
-        print 'saving parameters...'
+        print('saving parameters...')
         save_path = 'params_epoch_'+str(n)+'.pkl'
         f = open(save_path, 'wb')
         try:
@@ -522,14 +522,14 @@ def experiment(state, channel):
 
     if state.test_model:
         # If testing, do not train and go directly to generating samples, parzen window estimation, and inpainting
-        print 'Testing : skip training'
+        print('Testing : skip training')
         STOP    =   True
 
 
     while not STOP:
         counter     +=  1
         t = time.time()
-        print counter,'\t',
+        print(counter,'\t',)
 
         #train
         train_cost  =   []
@@ -539,7 +539,7 @@ def experiment(state, channel):
             train_cost.append(f_learn(i))
         train_cost = numpy.mean(train_cost) 
         train_costs.append(train_cost)
-        print 'Train : ',trunc(train_cost), '\t',
+        print('Train : ',trunc(train_cost), '\t',)
 
 
         #valid
@@ -549,7 +549,7 @@ def experiment(state, channel):
         valid_cost = numpy.mean(valid_cost)
         #valid_cost  =   123
         valid_costs.append(valid_cost)
-        print 'Valid : ', trunc(valid_cost), '\t',
+        print('Valid : ', trunc(valid_cost), '\t',)
 
         #test
         test_cost  =   []
@@ -557,16 +557,16 @@ def experiment(state, channel):
             test_cost.append(f_cost(test_X.get_value()[i * 100 : (i+1) * batch_size]))
         test_cost = numpy.mean(test_cost)
         test_costs.append(test_cost)
-        print 'Test  : ', trunc(test_cost), '\t',
+        print('Test  : ', trunc(test_cost), '\t',)
 
         if counter >= n_epoch:
             STOP = True
 
-        print 'time : ', trunc(time.time() - t),
+        print('time : ', trunc(time.time() - t),)
 
-        print 'MeanVisB : ', trunc(bias_list[0].get_value().mean()),
+        print('MeanVisB : ', trunc(bias_list[0].get_value().mean()),)
         
-        print 'W : ', [trunc(abs(w.get_value(borrow=True)).mean()) for w in weights_list]
+        print('W : ', [trunc(abs(w.get_value(borrow=True)).mean()) for w in weights_list])
 
         if (counter % 5) == 0:
             # Checking reconstruction
@@ -596,20 +596,20 @@ def experiment(state, channel):
     # if test
 
     # 10k samples
-    print 'Generating 10,000 samples'
+    print('Generating 10,000 samples')
     samples, _  =   sample_some_numbers(N=10000)
     f_samples   =   'samples.npy'
     numpy.save(f_samples, samples)
-    print 'saved digits'
+    print('saved digits')
 
 
     # parzen
-    print 'Evaluating parzen window'
+    print('Evaluating parzen window')
     import likelihood_estimation_parzen
     likelihood_estimation_parzen.main(0.20,'mnist') 
 
     # Inpainting
-    print 'Inpainting'
+    print('Inpainting')
     test_X  =   test_X.get_value()
 
     numpy.random.seed(2)
