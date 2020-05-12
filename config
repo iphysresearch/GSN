@@ -1,0 +1,1 @@
+Namespace(K=1, N=1, act='sigmoid', annealing=1.0, batch_size=100, data_path='.', dataset='MNIST_binary', hidden_add_noise_sigma=0, hidden_size=2000, input_salt_and_pepper=0.4, input_sampling=1, learning_rate=10, momentum=0.0, n_epoch=200, noiseless_h1=1, test_model=0, vis_init=0)
