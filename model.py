@@ -40,11 +40,13 @@ def get_shared_bias(n, name, offset = 0):
     return val
 
 def load_mnist(path):
-    data = pk.load(open(os.path.join(path,'mnist.pkl'), 'rb'))
+    with open(os.path.join(path,'mnist.pkl'), 'rb') as f:
+        data = pk.load(f, encoding='bytes')
     return data
 
 def load_mnist_binary(path):
-    data = pk.load(open(os.path.join(path,'mnist.pkl'), 'rb'))
+    with open(os.path.join(path,'mnist.pkl'), 'rb') as f:
+        data = pk.load(f, encoding='bytes')    
     data = [list(d) for d in data] 
     data[0][0] = (data[0][0] > 0.5).astype('float32')
     data[1][0] = (data[1][0] > 0.5).astype('float32')
@@ -307,7 +309,8 @@ def experiment(state, channel):
     #COST = T.mean(COST)
     
     params          =   weights_list + bias_list
-    
+    print('======== COST:', COST)
+    print('======== params:', params)
     gradient        =   T.grad(COST, params)
                 
     gradient_buffer =   [theano.shared(numpy.zeros(x.get_value().shape, dtype='float32')) for x in params]
